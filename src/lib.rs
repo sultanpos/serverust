@@ -1,8 +1,11 @@
-pub mod adapters;
+// Clean Architecture - Simpler, More Explicit
 pub mod application;
+pub mod config;
+pub mod crypto;
 pub mod domain;
-pub mod infra;
+pub mod persistence;
+pub mod server;
+pub mod web;
 
-// Re-exports for shorter use statements.
-pub use application::*;
-pub use domain::*;
+// Re-exports for convenience
+pub use server::create_app;
