@@ -1,7 +1,11 @@
 [package]
 name = "sultan"
+description = "Sultan POS server"
 version = "0.0.1"
-edition = "2025"
+authors = ["Apin <apin.klas@gmail.com"]
+edition = "2024"
+repository = "https://github.com/sultanpos/serverust"
+license = "GPL-3.0"
 
 [dependencies]
 axum = "0.8"

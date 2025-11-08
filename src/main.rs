@@ -5,7 +5,7 @@ use tracing::info;
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
-    let app = clean_architecture::create_app().await?;
+    let app = sultan::create_app().await?;
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3001").await?;
 
