@@ -189,8 +189,18 @@ jobs:
     - name: Build
       run: cargo build --verbose
     
-    - name: Run tests
+    - name: Run tests (SQLite)
+      if: matrix.database == 'sqlite'
       run: cargo test --verbose
+    
+    - name: Run tests (PostgreSQL - including ignored integration tests)
+      if: matrix.database == 'postgres'
+      run: |
+        echo "Running regular tests..."
+        cargo test --verbose
+        echo ""
+        echo "Running PostgreSQL integration tests (ignored tests)..."
+        cargo test --verbose --lib -- --ignored
 
   coverage:
     name: Code Coverage
