@@ -1,33 +1,60 @@
-use axum::{http, Router};
+use axum::{Router, http};
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
-use sqlx::{postgres::PgPoolOptions, PgPool};
-use std::{env, fs::File, sync::Arc};
+use sqlx::{Sqlite, migrate::MigrateDatabase, postgres::PgPoolOptions, sqlite::SqlitePoolOptions};
+use std::{fs::File, sync::Arc};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 
 use crate::{
     application::user_service::UserService,
-    config::AppConfig,
+    config::{AppConfig, DatabaseType},
     crypto::Argon2PasswordHasher,
-    persistence::PostgresUserRepository,
-    web::{user_router, AppState},
+    persistence::{SqlUserRepository, user_repo::DbPool},
+    web::{AppState, user_router},
 };
 
 // ============================================================================
 // Database Connection
 // ============================================================================
 
-async fn init_db() -> anyhow::Result<PgPool> {
-    let database_url = env::var("DATABASE_URL")?;
+async fn init_db(config: &AppConfig) -> anyhow::Result<DbPool> {
+    let database_url = &config.database_url;
 
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await?;
+    match config.database_type {
+        DatabaseType::Postgres => {
+            tracing::info!("Connecting to PostgreSQL database");
+            let pool = PgPoolOptions::new()
+                .max_connections(5)
+                .connect(database_url)
+                .await?;
 
-    tracing::info!("Connected to database");
-    Ok(pool)
+            tracing::info!("Running PostgreSQL migrations");
+            sqlx::migrate!("./migrations").run(&pool).await?;
+
+            tracing::info!("Connected to PostgreSQL database");
+            Ok(DbPool::Postgres(pool))
+        }
+        DatabaseType::Sqlite => {
+            // Create database if it doesn't exist
+            if !Sqlite::database_exists(database_url).await? {
+                tracing::info!("Creating SQLite database at: {}", database_url);
+                Sqlite::create_database(database_url).await?;
+            }
+
+            tracing::info!("Connecting to SQLite database");
+            let pool = SqlitePoolOptions::new()
+                .max_connections(5)
+                .connect(database_url)
+                .await?;
+
+            tracing::info!("Running SQLite migrations");
+            sqlx::migrate!("./migrations-sqlite").run(&pool).await?;
+
+            tracing::info!("Connected to SQLite database");
+            Ok(DbPool::Sqlite(pool))
+        }
+    }
 }
 
 // ============================================================================
@@ -68,10 +95,10 @@ async fn init_app_state() -> anyhow::Result<AppState> {
     let config = AppConfig::from_env();
 
     // Initialize database
-    let pool = init_db().await?;
+    let pool = init_db(&config).await?;
 
     // Create repository and service
-    let user_repository = Arc::new(PostgresUserRepository::new(pool));
+    let user_repository = Arc::new(SqlUserRepository::new(pool));
     let password_hasher = Arc::new(Argon2PasswordHasher::default());
     let user_service = UserService::new(password_hasher, user_repository);
 

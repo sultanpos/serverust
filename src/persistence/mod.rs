@@ -1,3 +1,3 @@
 pub mod user_repo;
 
-pub use user_repo::PostgresUserRepository;
+pub use user_repo::{DbPool, SqlUserRepository};
