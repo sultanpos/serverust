@@ -72,35 +72,37 @@ impl UserRepository for SqliteUserRepository {
     }
 
     async fn get_user_by_id(&self, id: &Uuid) -> AppResult<Option<User>> {
-        let user = sqlx::query_as::<_, UserDbSqlite>("SELECT id, username, email, password_hash, created_at FROM users WHERE id = ?")
-            .bind(id.to_string())
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        let user = sqlx::query_as::<_, UserDbSqlite>(
+            "SELECT id, username, email, password_hash, created_at FROM users WHERE id = ?",
+        )
+        .bind(id.to_string())
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(user.map(|u| u.into()))
     }
 
     async fn get_user_by_username(&self, username: &str) -> AppResult<Option<User>> {
-        let user = sqlx::query_as::<_, UserDbSqlite>("SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?")
-            .bind(username)
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        let user = sqlx::query_as::<_, UserDbSqlite>(
+            "SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?",
+        )
+        .bind(username)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(user.map(|u| u.into()))
     }
 
     async fn update_user(&self, id: &Uuid, username: &str, email: &str) -> AppResult<()> {
-        let result = sqlx::query(
-            "UPDATE users SET username = ?, email = ? WHERE id = ?",
-        )
-        .bind(username)
-        .bind(email)
-        .bind(id.to_string())
-        .execute(&self.pool)
-        .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        let result = sqlx::query("UPDATE users SET username = ?, email = ? WHERE id = ?")
+            .bind(username)
+            .bind(email)
+            .bind(id.to_string())
+            .execute(&self.pool)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         if result.rows_affected() == 0 {
             return Err(AppError::NotFound("User not found".to_string()));

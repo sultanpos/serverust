@@ -68,35 +68,37 @@ impl UserRepository for PostgresUserRepository {
     }
 
     async fn get_user_by_id(&self, id: &Uuid) -> AppResult<Option<User>> {
-        let user = sqlx::query_as::<_, UserDbPg>("SELECT id, username, email, password_hash, created_at FROM users WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        let user = sqlx::query_as::<_, UserDbPg>(
+            "SELECT id, username, email, password_hash, created_at FROM users WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(user.map(|u| u.into()))
     }
 
     async fn get_user_by_username(&self, username: &str) -> AppResult<Option<User>> {
-        let user = sqlx::query_as::<_, UserDbPg>("SELECT id, username, email, password_hash, created_at FROM users WHERE username = $1")
-            .bind(username)
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        let user = sqlx::query_as::<_, UserDbPg>(
+            "SELECT id, username, email, password_hash, created_at FROM users WHERE username = $1",
+        )
+        .bind(username)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(user.map(|u| u.into()))
     }
 
     async fn update_user(&self, id: &Uuid, username: &str, email: &str) -> AppResult<()> {
-        let result = sqlx::query(
-            "UPDATE users SET username = $1, email = $2 WHERE id = $3",
-        )
-        .bind(username)
-        .bind(email)
-        .bind(id)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        let result = sqlx::query("UPDATE users SET username = $1, email = $2 WHERE id = $3")
+            .bind(username)
+            .bind(email)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         if result.rows_affected() == 0 {
             return Err(AppError::NotFound("User not found".to_string()));
@@ -122,9 +124,10 @@ mod tests {
     use sqlx::PgPool;
 
     async fn setup_test_db() -> PgPool {
-        let database_url = std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/sultan_test".to_string());
-        
+        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://postgres:postgres@localhost:5432/sultan_test".to_string()
+        });
+
         PgPool::connect(&database_url)
             .await
             .expect("Failed to connect to test database")
@@ -158,7 +161,9 @@ mod tests {
         assert_eq!(user.password_hash, password_hash);
 
         // Clean up
-        repo.delete_user(&user.id).await.expect("Failed to delete user");
+        repo.delete_user(&user.id)
+            .await
+            .expect("Failed to delete user");
     }
 
     #[tokio::test]
@@ -195,7 +200,9 @@ mod tests {
         assert_eq!(user_by_id.username, username);
 
         // Clean up
-        repo.delete_user(&user.id).await.expect("Failed to delete user");
+        repo.delete_user(&user.id)
+            .await
+            .expect("Failed to delete user");
     }
 
     #[tokio::test]
@@ -240,7 +247,9 @@ mod tests {
         assert_eq!(updated_user.password_hash, password_hash); // Password should remain unchanged
 
         // Clean up
-        repo.delete_user(&user.id).await.expect("Failed to delete user");
+        repo.delete_user(&user.id)
+            .await
+            .expect("Failed to delete user");
     }
 
     #[tokio::test]
