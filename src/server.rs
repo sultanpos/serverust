@@ -10,7 +10,7 @@ use crate::{
     application::user_service::UserService,
     config::{AppConfig, DatabaseType},
     crypto::Argon2PasswordHasher,
-    persistence::{SqlUserRepository, user_repo::DbPool},
+    persistence::{DbPool, PostgresUserRepository, SqliteUserRepository, UserRepository},
     web::{AppState, user_router},
 };
 
@@ -97,8 +97,12 @@ async fn init_app_state() -> anyhow::Result<AppState> {
     // Initialize database
     let pool = init_db(&config).await?;
 
-    // Create repository and service
-    let user_repository = Arc::new(SqlUserRepository::new(pool));
+    // Create repository based on database type
+    let user_repository: Arc<dyn UserRepository> = match pool {
+        DbPool::Postgres(pg_pool) => Arc::new(PostgresUserRepository::new(pg_pool)),
+        DbPool::Sqlite(sqlite_pool) => Arc::new(SqliteUserRepository::new(sqlite_pool)),
+    };
+
     let password_hasher = Arc::new(Argon2PasswordHasher::default());
     let user_service = UserService::new(password_hasher, user_repository);
 

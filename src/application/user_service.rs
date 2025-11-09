@@ -1,18 +1,18 @@
-use async_trait::async_trait;
 use secrecy::{ExposeSecret, SecretString};
 use std::sync::Arc;
 use tracing::{info, instrument};
 
-use crate::application::app_error::AppResult;
+#[cfg(test)]
+use async_trait::async_trait;
+
+use crate::{
+    application::app_error::AppResult,
+    persistence::user_repo::UserRepository,
+};
 
 // ============================================================================
 // Port Traits (Interfaces for dependencies)
 // ============================================================================
-
-#[async_trait]
-pub trait UserRepository: Send + Sync {
-    async fn create_user(&self, username: &str, email: &str, password_hash: &str) -> AppResult<()>;
-}
 
 pub trait PasswordHasher: Send + Sync {
     fn hash_password(&self, password: &str) -> AppResult<String>;
