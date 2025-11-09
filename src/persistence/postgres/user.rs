@@ -139,8 +139,14 @@ mod tests {
         let pool = setup_test_db().await;
         let repo = PostgresUserRepository::new(pool);
 
-        // Create a user
-        let username = format!("test_user_{}", Uuid::new_v4());
+        // Create a user (use short UUID to stay under varchar(50) limit)
+        let uuid_short = Uuid::new_v4()
+            .to_string()
+            .split('-')
+            .next()
+            .unwrap()
+            .to_string();
+        let username = format!("user_{}", uuid_short);
         let email = format!("{}@example.com", username);
         let password_hash = "hashed_password";
 
@@ -173,7 +179,13 @@ mod tests {
         let repo = PostgresUserRepository::new(pool);
 
         // Create a user
-        let username = format!("test_user_{}", Uuid::new_v4());
+        let uuid_short = Uuid::new_v4()
+            .to_string()
+            .split('-')
+            .next()
+            .unwrap()
+            .to_string();
+        let username = format!("user_{}", uuid_short);
         let email = format!("{}@example.com", username);
         let password_hash = "hashed_password";
 
@@ -211,8 +223,14 @@ mod tests {
         let pool = setup_test_db().await;
         let repo = PostgresUserRepository::new(pool);
 
-        // Create a user
-        let username = format!("test_user_{}", Uuid::new_v4());
+        // Create a user with short UUID suffix to stay under 50 char limit
+        let uuid_short = Uuid::new_v4()
+            .to_string()
+            .split('-')
+            .next()
+            .unwrap()
+            .to_string();
+        let username = format!("user_{}", uuid_short);
         let email = format!("{}@example.com", username);
         let password_hash = "hashed_password";
 
@@ -227,8 +245,8 @@ mod tests {
             .expect("Failed to get user")
             .expect("User not found");
 
-        // Update user
-        let new_username = format!("updated_{}", username);
+        // Update user (new_username will be under 50 chars: "upd_user_" + 8 chars = ~17 chars)
+        let new_username = format!("upd_{}", username);
         let new_email = format!("{}@example.com", new_username);
 
         repo.update_user(&user.id, &new_username, &new_email)
@@ -259,7 +277,13 @@ mod tests {
         let repo = PostgresUserRepository::new(pool);
 
         // Create a user
-        let username = format!("test_user_{}", Uuid::new_v4());
+        let uuid_short = Uuid::new_v4()
+            .to_string()
+            .split('-')
+            .next()
+            .unwrap()
+            .to_string();
+        let username = format!("user_{}", uuid_short);
         let email = format!("{}@example.com", username);
         let password_hash = "hashed_password";
 
