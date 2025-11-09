@@ -36,9 +36,8 @@ pub struct UserDbSqlite {
 
 impl From<UserDbSqlite> for User {
     fn from(user_db: UserDbSqlite) -> Self {
-        let id = Uuid::parse_str(&user_db.id)
-            .unwrap_or_else(|_| Uuid::new_v4());
-        
+        let id = Uuid::parse_str(&user_db.id).unwrap_or_else(|_| Uuid::new_v4());
+
         let created_at = NaiveDateTime::parse_from_str(&user_db.created_at, "%Y-%m-%d %H:%M:%S%.f")
             .or_else(|_| NaiveDateTime::parse_from_str(&user_db.created_at, "%Y-%m-%d %H:%M:%S"))
             .unwrap_or_else(|_| chrono::Utc::now().naive_utc());
@@ -57,17 +56,15 @@ impl From<UserDbSqlite> for User {
 impl UserRepository for SqliteUserRepository {
     async fn create_user(&self, username: &str, email: &str, password_hash: &str) -> AppResult<()> {
         let uuid = Uuid::new_v4().to_string();
-        
-        sqlx::query(
-            "INSERT INTO users (id, username, email, password_hash) VALUES (?, ?, ?, ?)"
-        )
-        .bind(uuid)
-        .bind(username)
-        .bind(email)
-        .bind(password_hash)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        sqlx::query("INSERT INTO users (id, username, email, password_hash) VALUES (?, ?, ?, ?)")
+            .bind(uuid)
+            .bind(username)
+            .bind(email)
+            .bind(password_hash)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(())
     }

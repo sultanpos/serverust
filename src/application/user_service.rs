@@ -5,10 +5,7 @@ use tracing::{info, instrument};
 #[cfg(test)]
 use async_trait::async_trait;
 
-use crate::{
-    application::app_error::AppResult,
-    persistence::user_repo::UserRepository,
-};
+use crate::{application::app_error::AppResult, persistence::user_repo::UserRepository};
 
 // ============================================================================
 // Port Traits (Interfaces for dependencies)
@@ -29,15 +26,17 @@ pub struct UserService {
 }
 
 impl UserService {
-    pub fn new(
-        hasher: Arc<dyn PasswordHasher>,
-        repository: Arc<dyn UserRepository>,
-    ) -> Self {
+    pub fn new(hasher: Arc<dyn PasswordHasher>, repository: Arc<dyn UserRepository>) -> Self {
         Self { hasher, repository }
     }
 
     #[instrument(skip(self, password))]
-    pub async fn register_user(&self, username: &str, email: &str, password: &SecretString) -> AppResult<()> {
+    pub async fn register_user(
+        &self,
+        username: &str,
+        email: &str,
+        password: &SecretString,
+    ) -> AppResult<()> {
         info!("Registering user: {}", username);
 
         let hash = self.hasher.hash_password(password.expose_secret())?;
@@ -83,10 +82,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_user() {
-        let service = UserService::new(
-            Arc::new(MockPasswordHasher),
-            Arc::new(MockUserRepository),
-        );
+        let service = UserService::new(Arc::new(MockPasswordHasher), Arc::new(MockUserRepository));
 
         let result = service
             .register_user("testuser", "testuser@gmail.com", &"password123".into())

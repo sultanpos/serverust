@@ -1,10 +1,4 @@
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::IntoResponse,
-    routing::post,
-    Json, Router,
-};
+use axum::{Json, Router, extract::State, http::StatusCode, response::IntoResponse, routing::post};
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -42,7 +36,7 @@ async fn register(
     Json(payload): Json<RegisterRequest>,
 ) -> AppResult<impl IntoResponse> {
     info!("Register endpoint called");
-    
+
     user_service
         .register_user(&payload.username, &payload.email, &payload.password)
         .await?;

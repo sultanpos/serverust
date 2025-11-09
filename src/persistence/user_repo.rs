@@ -23,7 +23,7 @@ pub enum DbPool {
 pub trait UserRepository: Send + Sync {
     /// Create a new user in the database
     async fn create_user(&self, username: &str, email: &str, password_hash: &str) -> AppResult<()>;
-    
+
     // TODO: Add more methods as needed:
     // async fn get_user_by_id(&self, id: &Uuid) -> AppResult<Option<User>>;
     // async fn get_user_by_username(&self, username: &str) -> AppResult<Option<User>>;
