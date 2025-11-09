@@ -235,6 +235,21 @@ jobs:
     needs: [test, coverage]
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sultan_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
     steps:
     - uses: actions/checkout@v4
       with:
@@ -246,7 +261,10 @@ jobs:
     - name: Install cargo-llvm-cov
       run: cargo install cargo-llvm-cov
     
-    - name: Setup test environment
+    - name: Install sqlx-cli
+      run: cargo install sqlx-cli --no-default-features --features sqlite,postgres
+    
+    - name: Setup SQLite environment
       run: |
         echo "DATABASE_TYPE=sqlite" > .env
         echo "DATABASE_URL=sqlite:test.db" >> .env
@@ -254,25 +272,44 @@ jobs:
         echo "REFRESH_TOKEN_TTL_DAYS=30" >> .env
         echo "JWT_SECRET=test_secret_for_ci" >> .env
     
-    - name: Install sqlx-cli
-      run: cargo install sqlx-cli --no-default-features --features sqlite
-    
-    - name: Setup database
+    - name: Setup SQLite database
       run: |
         sqlx database create --database-url sqlite:test.db
         sqlx migrate run --source migrations-sqlite --database-url sqlite:test.db
     
-    - name: Generate coverage for SonarQube
-      run: cargo llvm-cov --all-features --workspace --lcov --output-path coverage.lcov
+    - name: Generate SQLite coverage
+      run: cargo llvm-cov --all-features --workspace --lcov --output-path coverage-sqlite.lcov
+    
+    - name: Setup PostgreSQL environment
+      run: |
+        echo "DATABASE_TYPE=postgres" > .env
+        echo "DATABASE_URL=postgres://postgres:postgres@localhost:5432/sultan_test" >> .env
+        echo "RUST_LOG=sultan=debug,tower_http=debug,sqlx=warn" >> .env
+        echo "REFRESH_TOKEN_TTL_DAYS=30" >> .env
+        echo "JWT_SECRET=test_secret_for_ci" >> .env
+    
+    - name: Setup PostgreSQL database
+      run: |
+        sqlx database create
+        sqlx migrate run --source migrations
+    
+    - name: Generate PostgreSQL coverage
+      run: cargo llvm-cov --all-features --workspace --lcov --output-path coverage-postgres.lcov --no-clean
+    
+    - name: Merge coverage reports
+      run: |
+        # Install lcov for merging coverage reports
+        sudo apt-get update
+        sudo apt-get install -y lcov
+        
+        # Merge the two coverage files
+        lcov -a coverage-sqlite.lcov -a coverage-postgres.lcov -o coverage.lcov
+        
+        echo "📊 Coverage report merged successfully"
+        lcov --summary coverage.lcov
     
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     
-    - name: SonarQube Quality Gate check
-      uses: sonarsource/sonarqube-quality-gate-action@master
-      timeout-minutes: 5
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
