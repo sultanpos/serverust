@@ -183,11 +183,6 @@ jobs:
     - name: Generate coverage for SonarQube
       run: cargo llvm-cov --all-features --workspace --lcov --output-path coverage.lcov
     
-    - name: Run tests with JUnit output
-      run: |
-        cargo install cargo2junit
-        cargo test --no-fail-fast -- -Z unstable-options --format json --report-time | cargo2junit > test-results.xml || true
-    
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
       env:
