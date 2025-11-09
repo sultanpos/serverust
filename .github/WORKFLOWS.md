@@ -45,7 +45,7 @@ strategy:
 ### 2. PR Checks Workflow (`.github/workflows/pr-checks.yml`)
 
 **Triggers:**
-- Pull request opened, synchronized, or reopened
+- Pull request opened, synchronized, reopened, or edited (title changes)
 
 **Jobs:**
 

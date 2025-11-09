@@ -2,7 +2,7 @@ name: PR Checks
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   check-pr:
@@ -14,15 +14,30 @@ jobs:
       with:
         fetch-depth: 0
     
+    - name: Get latest PR title
+      id: pr-title
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: pullRequest } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          return pullRequest.title;
+        result-encoding: string
+    
     - name: Check PR title format
+      env:
+        PR_TITLE: ${{ steps.pr-title.outputs.result }}
       run: |
-        PR_TITLE="${{ github.event.pull_request.title }}"
+        echo "Checking PR title: $PR_TITLE"
         if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+ ]]; then
           echo "❌ PR title must follow conventional commits format"
           echo "Examples: 'feat: add user authentication' or 'fix(auth): resolve login issue'"
           exit 1
         fi
-        echo "✅ PR title format is valid"
+        echo "✅ PR title format is valid: $PR_TITLE"
     
     - name: Check for breaking changes
       run: |
