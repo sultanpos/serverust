@@ -189,24 +189,12 @@ jobs:
         cargo test --no-fail-fast -- -Z unstable-options --format json --report-time | cargo2junit > test-results.xml || true
     
     - name: SonarQube Scan
-      uses: sonarsource/sonarqube-scan-action@master
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      with:
-        args: >
-          -Dsonar.projectKey=sultan-pos-server
-          -Dsonar.sources=src
-          -Dsonar.tests=src
-          -Dsonar.test.inclusions=**/*_test.rs,**/tests/**
-          -Dsonar.exclusions=**/target/**,**/*.xml,**/*.json
-          -Dsonar.rust.lcov.reportPaths=coverage.lcov
-          -Dsonar.testExecutionReportPaths=test-results.xml
-          -Dsonar.sourceEncoding=UTF-8
     
     - name: SonarQube Quality Gate check
       uses: sonarsource/sonarqube-quality-gate-action@master
       timeout-minutes: 5
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
