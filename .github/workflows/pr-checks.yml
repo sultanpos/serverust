@@ -32,9 +32,15 @@ jobs:
         PR_TITLE: ${{ steps.pr-title.outputs.result }}
       run: |
         echo "Checking PR title: $PR_TITLE"
-        if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+ ]]; then
+        # Define the regex pattern
+        PATTERN='^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?!?: .+'
+        
+        if [[ ! "$PR_TITLE" =~ $PATTERN ]]; then
           echo "❌ PR title must follow conventional commits format"
-          echo "Examples: 'feat: add user authentication' or 'fix(auth): resolve login issue'"
+          echo "Examples:"
+          echo "  - feat: add user authentication"
+          echo "  - fix(auth): resolve login issue"
+          echo "  - docs: update API documentation"
           exit 1
         fi
         echo "✅ PR title format is valid: $PR_TITLE"
