@@ -1,0 +1,85 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-pr:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Check PR title format
+      run: |
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+ ]]; then
+          echo "❌ PR title must follow conventional commits format"
+          echo "Examples: 'feat: add user authentication' or 'fix(auth): resolve login issue'"
+          exit 1
+        fi
+        echo "✅ PR title format is valid"
+    
+    - name: Check for breaking changes
+      run: |
+        # Check if there are breaking changes in the PR
+        if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E "(Cargo.toml|src/.*\.rs)" > /dev/null; then
+          echo "🔍 Code changes detected - running full test suite"
+          echo "run_full_tests=true" >> $GITHUB_ENV
+        else
+          echo "📝 Only documentation changes detected"
+          echo "run_full_tests=false" >> $GITHUB_ENV
+        fi
+    
+    - name: Comment on PR
+      if: github.event.action == 'opened'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '🚀 Thanks for the PR! The CI pipeline will run tests for both SQLite and PostgreSQL databases. Please ensure all checks pass before requesting a review.'
+          })
+
+  validate-code:
+    name: Code Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Check code formatting
+      run: |
+        if ! cargo fmt --all -- --check; then
+          echo "❌ Code is not properly formatted"
+          echo "Run 'cargo fmt' to fix formatting issues"
+          exit 1
+        fi
+        echo "✅ Code formatting is correct"
+    
+    - name: Run Clippy lints
+      run: |
+        if ! cargo clippy --all-targets --all-features -- -D warnings; then
+          echo "❌ Clippy found issues"
+          echo "Fix the issues shown above"
+          exit 1
+        fi
+        echo "✅ No Clippy issues found"
+    
+    - name: Check for TODO/FIXME comments
+      run: |
+        if grep -r "TODO\|FIXME" src/ --include="*.rs"; then
+          echo "⚠️  Found TODO/FIXME comments. Consider addressing them before merging."
+        else
+          echo "✅ No TODO/FIXME comments found"
+        fi
