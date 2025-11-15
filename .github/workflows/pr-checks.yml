@@ -158,7 +158,7 @@ jobs:
       run: cargo llvm-cov --all-features --workspace --lcov --output-path coverage.lcov
 
     - name: Upload coverage report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: coverage.lcov
@@ -176,7 +176,7 @@ jobs:
         fetch-depth: 0  # Shallow clones should be disabled for better analysis
     
     - name: Download coverage report
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: coverage-report
     
@@ -190,7 +190,7 @@ jobs:
           echo "❌ Coverage file not found!"
           exit 1
         fi
-        
+
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
       env:
