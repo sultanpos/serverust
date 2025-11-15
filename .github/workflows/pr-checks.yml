@@ -158,6 +158,8 @@ jobs:
       run: cargo build --verbose
     
     - name: Run tests
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/sultan_test
       run: cargo test --verbose
 
   

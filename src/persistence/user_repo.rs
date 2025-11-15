@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use sqlx::{PgPool, SqlitePool};
-use uuid::Uuid;
 
 use crate::application::app_error::AppResult;
 use crate::domain::user::User;
@@ -36,6 +35,7 @@ mod tests {
     use crate::persistence::postgres::user::PostgresUserRepository;
     use crate::persistence::sqlite::user::SqliteUserRepository;
     use std::sync::Arc;
+    use uuid::Uuid;
 
     // Helper to create SQLite test repository
     async fn setup_sqlite_repo() -> Arc<dyn UserRepository> {
