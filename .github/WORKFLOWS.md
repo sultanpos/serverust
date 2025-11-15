@@ -7,19 +7,10 @@ This document describes the CI/CD pipeline configuration for Sultan Server.
 ### 1. CI Workflow (`.github/workflows/ci.yml`)
 
 **Triggers:**
-- Push to `main`, `dev`, or `develop` branches
+- Push to `master` branches
 - Pull requests to these branches
 
 **Jobs:**
-
-#### Test Matrix
-Runs tests against both SQLite and PostgreSQL databases:
-
-```yaml
-strategy:
-  matrix:
-    database: [sqlite, postgres]
-```
 
 **Steps:**
 1. Checkout code
