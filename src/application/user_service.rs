@@ -70,32 +70,11 @@ mod tests {
             assert_eq!(email, "testuser@gmail.com");
             Ok(())
         }
-
-        async fn get_user_by_id(
-            &self,
-            _id: &uuid::Uuid,
-        ) -> AppResult<Option<crate::domain::user::User>> {
-            Ok(None)
-        }
-
         async fn get_user_by_username(
             &self,
             _username: &str,
         ) -> AppResult<Option<crate::domain::user::User>> {
             Ok(None)
-        }
-
-        async fn update_user(
-            &self,
-            _id: &uuid::Uuid,
-            _username: &str,
-            _email: &str,
-        ) -> AppResult<()> {
-            Ok(())
-        }
-
-        async fn delete_user(&self, _id: &uuid::Uuid) -> AppResult<bool> {
-            Ok(true)
         }
     }
 

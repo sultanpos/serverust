@@ -26,17 +26,8 @@ pub trait UserRepository: Send + Sync {
     /// Create a new user in the database
     async fn create_user(&self, username: &str, email: &str, password_hash: &str) -> AppResult<()>;
 
-    /// Get a user by their ID
-    async fn get_user_by_id(&self, id: &Uuid) -> AppResult<Option<User>>;
-
     /// Get a user by their username
     async fn get_user_by_username(&self, username: &str) -> AppResult<Option<User>>;
-
-    /// Update an existing user
-    async fn update_user(&self, id: &Uuid, username: &str, email: &str) -> AppResult<()>;
-
-    /// Delete a user by their ID
-    async fn delete_user(&self, id: &Uuid) -> AppResult<bool>;
 }
 
 #[cfg(test)]
@@ -76,6 +67,12 @@ mod tests {
                     database_url, e
                 )
             });
+
+        // Run migrations
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("Failed to run PostgreSQL migrations");
 
         // Clean up existing test data
         sqlx::query("TRUNCATE TABLE users CASCADE")
